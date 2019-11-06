@@ -96,6 +96,14 @@ class Tox @Inject constructor(
         tox.stopFileTransfer(publicKey, fileNumber)
     }
 
+    fun startCall(publicKey: PublicKey) = launch {
+        tox.startAudioCall(publicKey)
+    }
+
+    fun stopCall(publicKey: PublicKey) = launch {
+        tox.startAudioCall(publicKey)
+    }
+
     fun setName(name: String) = launch {
         tox.setName(name)
         save()

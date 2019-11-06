@@ -26,4 +26,6 @@ class ChatViewModel @Inject constructor(
         publicKey = pubKey
         notificationHelper.activeChat = pubKey.string()
     }
+
+    fun startCall() = chatManager.startCall(publicKey)
 }

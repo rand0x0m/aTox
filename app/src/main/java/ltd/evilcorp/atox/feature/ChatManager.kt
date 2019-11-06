@@ -33,4 +33,8 @@ class ChatManager @Inject constructor(
         messageRepository.delete(publicKey.string())
         contactRepository.setLastMessage(publicKey.string(), "Never")
     }
+
+    fun startCall(publicKey: PublicKey) = launch {
+        tox.startCall(publicKey)
+    }
 }

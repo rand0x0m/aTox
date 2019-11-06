@@ -94,6 +94,10 @@ class ChatFragment : Fragment() {
             adapter.notifyDataSetChanged()
         })
 
+        call.setOnClickListener {
+            viewModel.startCall()
+        }
+
         send.setOnClickListener {
             val message = outgoingMessage.text.toString()
             outgoingMessage.text.clear()

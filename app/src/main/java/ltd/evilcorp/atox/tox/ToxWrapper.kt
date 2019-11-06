@@ -1,9 +1,15 @@
 package ltd.evilcorp.atox.tox
 
+import android.media.AudioFormat
+import android.media.AudioRecord
+import android.media.MediaRecorder
 import android.util.Log
+import im.tox.tox4j.av.enums.ToxavFriendCallState
 import im.tox.tox4j.core.enums.ToxFileControl
 import im.tox.tox4j.core.enums.ToxMessageType
+import im.tox.tox4j.impl.jni.ToxAvImpl
 import im.tox.tox4j.impl.jni.ToxCoreImpl
+import java.util.*
 
 private const val TAG = "ToxWrapper"
 
@@ -13,7 +19,7 @@ class ToxWrapper(
     options: SaveOptions
 ) {
     private val tox: ToxCoreImpl = ToxCoreImpl(options.toToxOptions())
-
+    private val toxAv: ToxAvImpl = ToxAvImpl(tox)
     init {
         updateContactMapping()
     }
@@ -91,6 +97,47 @@ class ToxWrapper(
 
     fun stopFileTransfer(publicKey: PublicKey, fileNumber: Int) =
         tox.fileControl(contactByKey(publicKey), fileNumber, ToxFileControl.CANCEL)
+
+    fun startAudioCall(publicKey: PublicKey) {
+        Thread(Runnable {
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO)
+
+            toxAv.call(contactByKey(publicKey), 64, 0)
+
+            val arraySize = AudioRecord.getMinBufferSize(
+                44100,
+                AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_16BIT
+            )
+
+            val outputArray = ShortArray(arraySize)
+            //var inputArray = ShortArray(arraySize)
+
+            val audioRecorder = AudioRecord(
+                MediaRecorder.AudioSource.MIC, 44100,
+                AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, outputArray.size
+            )
+
+            audioRecorder.startRecording()
+
+            while (audioRecorder.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
+                //toxAv.invokeAudioReceiveFrame(contactByKey(publicKey), inputArray, AudioFormat.CHANNEL_IN_MONO,44100)
+                audioRecorder.read(outputArray, 0, outputArray.size)
+                toxAv.audioSendFrame(
+                    contactByKey(publicKey),
+                    outputArray,
+                    outputArray.size,
+                    audioRecorder.channelCount,
+                    audioRecorder.sampleRate
+                )
+            }
+        }).run()
+    }
+
+    fun stopCall(publicKey: PublicKey) {
+        toxAv.invokeCallState(contactByKey(publicKey), EnumSet.of(ToxavFriendCallState.FINISHED))
+        //TODO: Stop recording, probably a new AV class is needed.
+    }
 
     private fun contactByKey(publicKey: PublicKey): Int = tox.friendByPublicKey(publicKey.bytes())
 }
