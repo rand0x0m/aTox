@@ -60,9 +60,17 @@ class Tox @Inject constructor(
             }
         }
 
+        fun iterateAvForever() = launch {
+            while (running) {
+                tox.toxAv.iterate(ToxAvEventListener(), null)
+                delay(tox.toxAv.iterationInterval().toLong())
+            }
+        }
+
         save()
         loadSelf()
         loadContacts()
+        iterateAvForever()
         iterateForever()
     }
 

@@ -19,7 +19,7 @@ class ToxWrapper(
     options: SaveOptions
 ) {
     private val tox: ToxCoreImpl = ToxCoreImpl(options.toToxOptions())
-    private val toxAv: ToxAvImpl = ToxAvImpl(tox)
+    val toxAv: ToxAvImpl = ToxAvImpl(tox)
     init {
         updateContactMapping()
     }
